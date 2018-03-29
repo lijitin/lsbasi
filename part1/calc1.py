@@ -2,14 +2,14 @@
 #
 # EOF (end-of-file) token is used to indicate that
 # there is no more input left for lexical analysis
-INTEGER, PLUS, EOF = 'INTEGER', 'PLUS', 'EOF'
+INTEGER, PLUS, MINUS, SPACE, EOF = 'INTEGER', 'PLUS', 'MINUS', 'SPACE', 'EOF'
 
 
 class Token(object):
     def __init__(self, type, value):
-        # token type: INTEGER, PLUS, or EOF
+        # token type: INTEGER, PLUS, MINUS, SPACE or EOF
         self.type = type
-        # token value: 0, 1, 2. 3, 4, 5, 6, 7, 8, 9, '+', or None
+        # token value: 0, 1, 2. 3, 4, 5, 6, 7, 8, 9, '+', '-', ' ', or None
         self.value = value
 
     def __str__(self):
@@ -26,6 +26,7 @@ class Token(object):
 
     def __repr__(self):
         return self.__str__()
+    
 
 
 class Interpreter(object):
@@ -72,6 +73,16 @@ class Interpreter(object):
             self.pos += 1
             return token
 
+        if current_char == '-':
+            token = Token(MINUS, current_char)
+            self.pos += 1
+            return token
+
+        if current_char == ' ':
+            token = Token(SPACE, current_char)
+            self.pos += 1
+            return token
+
         self.error()
 
     def eat(self, token_type):
@@ -84,30 +95,61 @@ class Interpreter(object):
         else:
             self.error()
 
+    def int_value(self, token_list):
+        val = 0
+        for t in token_list:
+            val = val*10 + t.value
+        return val
+
+    def operation(self, num1, num2):
+        if(self.op.type == PLUS):
+            return num1 + num2
+        elif(self.op.type == MINUS):
+            return num1 - num2
+        else:
+            self.error()
+    
     def expr(self):
         """expr -> INTEGER PLUS INTEGER"""
         # set current token to the first token taken from the input
         self.current_token = self.get_next_token()
 
-        # we expect the current token to be a single-digit integer
-        left = self.current_token
-        self.eat(INTEGER)
+        # storing INTEGER tokens in left_list, until type meets PLUS
+        left_list = []
+        while(True):
+            if(self.current_token.type == INTEGER):
+                left_list.append(self.current_token)
+                self.eat(INTEGER)
+            elif(self.current_token.type == SPACE):
+                self.eat(SPACE)
+            else:
+                break
 
-        # we expect the current token to be a '+' token
-        op = self.current_token
-        self.eat(PLUS)
+        # we expect the current token to be a '+'/'-' token
+        # save the operator token as Interpreter object's var
+        self.op = self.current_token
+        self.eat(self.current_token.type)
 
-        # we expect the current token to be a single-digit integer
-        right = self.current_token
-        self.eat(INTEGER)
+        # storing INTEGER tokens in right_list, until type meets EOF
+        right_list = []
+        while(True):
+            if(self.current_token.type == INTEGER):
+                right_list.append(self.current_token)
+                self.eat(INTEGER)
+            elif(self.current_token.type == SPACE):
+                self.eat(SPACE)
+            else:
+                break
         # after the above call the self.current_token is set to
         # EOF token
 
-        # at this point INTEGER PLUS INTEGER sequence of tokens
-        # has been successfully found and the method can just
+        # evaluate the value of left_list and right_list
+        # with helper function int_value
+        left_value = self.int_value(left_list)
+        right_value = self.int_value(right_list)
         # return the result of adding two integers, thus
         # effectively interpreting client input
-        result = left.value + right.value
+        result = self.operation(left_value, right_value)
         return result
 
 
