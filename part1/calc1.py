@@ -142,7 +142,6 @@ class Interpreter(object):
                 break
         # after the above call the self.current_token is set to
         # EOF token
-
         # evaluate the value of left_list and right_list
         # with helper function int_value
         left_value = self.int_value(left_list)
